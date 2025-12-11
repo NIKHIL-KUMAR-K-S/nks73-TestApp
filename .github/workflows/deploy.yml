@@ -1,0 +1,54 @@
+name: Deploy to Kubernetes
+
+on:
+  workflow_run:
+    workflows: ["Build and publish to GHCR"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build job artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-output
+          path: ci-output
+
+      - name: Read CI outputs
+        id: read
+        run: |
+          IMAGE_REPO=$(cat ci-output/IMAGE_REPO.txt)
+          IMAGE_TAG=$(cat ci-output/IMAGE_TAG.txt)
+          echo "IMAGE_REPO=$IMAGE_REPO" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Create KUBECONFIG file
+        run: |
+          echo "${{ secrets.KUBECONFIG_DEV }}" > kubeconfig
+          chmod 600 kubeconfig
+
+      - name: Deploy using Helm
+        run: |
+          export KUBECONFIG=kubeconfig
+          helm upgrade --install devops-starter ./helm-chart \
+            -n dev --create-namespace \
+            --set image.repository=${{ steps.read.outputs.IMAGE_REPO }} \
+            --set image.tag=${{ steps.read.outputs.IMAGE_TAG }}
+
+      - name: Verify rollout
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl rollout status deployment/devops-starter-devops-starter -n dev --timeout=120s
