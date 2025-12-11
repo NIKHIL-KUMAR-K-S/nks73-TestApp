@@ -6,7 +6,9 @@ on:
 
 env:
   IMAGE_NAME: devops-starter
-  REGISTRY: ghcr.io/${{ toLower(github.repository_owner) }}
+  # REGISTRY: ghcr.io/${{ toLower(github.repository_owner) }}
+  REGISTRY: ghcr.io/nikhil-kumar-k-s
+  
 
 jobs:
   build-and-push:
