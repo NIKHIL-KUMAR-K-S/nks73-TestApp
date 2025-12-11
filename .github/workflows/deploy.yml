@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: [self-hosted, linux, codespace, runner-1]
+    runs-on: [self-hosted, Linux, X64, runner-1]
 
     steps:
       - name: Checkout code
