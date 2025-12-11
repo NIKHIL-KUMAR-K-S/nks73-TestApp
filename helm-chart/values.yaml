@@ -1,8 +1,11 @@
 replicaCount: 1
 image:
-  repository: ghcr.io/NIKHIL-KUMAR-K-S/devops-starter
+  repository: ghcr.io/nikhil-kumar-k-s/devops-starter
   tag: "latest"
   pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: ghcr-pat   # change to your secret name if you create one
 
 service:
   type: ClusterIP
