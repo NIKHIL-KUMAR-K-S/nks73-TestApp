@@ -6,16 +6,17 @@ on:
 
 env:
   IMAGE_NAME: devops-starter
-  REGISTRY: ghcr.io/${ github.repository_owner }
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
+      - name: Set up QEMU (optional multi-arch)
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
@@ -25,18 +26,18 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${ github.actor }
-          password: ${ secrets.GITHUB_TOKEN }
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
 
       - name: Build image
         run: |
-          IMAGE=${REGISTRY}/${IMAGE_NAME}:${github.sha}
+          IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           docker build -t $IMAGE .
 
-      - name: Push image
+      - name: Push image to GHCR
         run: |
-          IMAGE=${REGISTRY}/${IMAGE_NAME}:${github.sha}
+          IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           docker push $IMAGE
 
-      - name: Output image
-        run: echo "IMAGE=${REGISTRY}/${IMAGE_NAME}:${github.sha}"
+      - name: Output image name
+        run: echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_OUTPUT
