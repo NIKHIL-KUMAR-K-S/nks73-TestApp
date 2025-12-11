@@ -1,0 +1,8 @@
+replicaCount: 1
+image:
+  repository: ghcr.io/NIKHIL-KUMAR-K-S/devops-starter
+  tag: "latest"
+ingress:
+  enabled: true
+  host: "dev.devops-starter.local"
+resources: {}
