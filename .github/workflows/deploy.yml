@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, codespace, runner-1]
 
     steps:
       - name: Checkout code
@@ -20,13 +20,15 @@ jobs:
           echo "IMAGE_REPO=${{ github.event.workflow_run.outputs.IMAGE_REPO }}" >> $GITHUB_OUTPUT
           echo "IMAGE_TAG=${{ github.event.workflow_run.outputs.IMAGE_TAG }}" >> $GITHUB_OUTPUT
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v3
+      - name: Ensure kubectl is available
+        run: |
+          kubectl version --client || { echo "kubectl missing"; exit 1; }
 
-      - name: Install Helm
-        uses: azure/setup-helm@v3
+      - name: Ensure helm is available
+        run: |
+          helm version || { echo "helm missing"; exit 1; }
 
-      - name: Create kubeconfig file
+      - name: Write kubeconfig file
         run: |
           echo "${{ secrets.KUBECONFIG_DEV }}" > kubeconfig
           chmod 600 kubeconfig
@@ -35,7 +37,6 @@ jobs:
         run: |
           export KUBECONFIG=$(pwd)/kubeconfig
           echo "Deploying image ${{ steps.vars.outputs.IMAGE_REPO }}:${{ steps.vars.outputs.IMAGE_TAG }}"
-
           helm upgrade --install devops-starter ./helm-chart \
             -n dev --create-namespace \
             --set image.repository=${{ steps.vars.outputs.IMAGE_REPO }} \
